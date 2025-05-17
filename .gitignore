@@ -1,0 +1,30 @@
+# Node.js
+node_modules/
+.env
+.env.local
+.env.*.local
+npm-debug.log*
+yarn-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Next.js build outputs
+.next/
+out/
+
+# Logs
+logs
+*.log
+*.tsbuildinfo
+
+# System files
+.DS_Store
+Thumbs.db
+
+# OSS Cache / Uploads (if any)
+*.bak
+*.tmp
+.cache/
+
+# VS Code
+.vscode/
