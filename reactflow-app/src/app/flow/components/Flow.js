@@ -19,9 +19,12 @@ const nodeTypes = {
 
 export default function App() {
   const [uploadedFile, setUploadedFile] = useState(undefined); 
-  let documentIdGlobal = null
+  const [isLoading, setIsLoading] = useState(false);
+  let documentIdGlobal = null;
   const [selectedNodeText, setSelectedNodeText] = useState(undefined);
   let historicalData = {};
+  let nodes2 = []
+
   async function fetchData( { systemContent, userContent} ) {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_INFERENCE_IP}/chat`, {
@@ -96,48 +99,50 @@ export default function App() {
       systemContent = historicalData[parentId]
     }
 
-    // const chatResponse = await fetchData({systemContent, userContent})
-    // console.log(chatResponse)
-    const chatResponse = { section : [
-        {
-            "header": "What is the definition of a vector?",
-            "subheader": [
-                {
-                    "title": "Definition",
-                    "description": "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
-                    "sources": [1, 2, 3]
-                },
-                {
-                    "title": "Example",
-                    "description": "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
-                    "sources": [4, 5]
-                }
-            ]
-        },
-        {
-            "header": "What is the definition of a vector?",
-            "subheader": [
-                {
-                    "title": "Definition",
-                    "description": "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
-                    "sources": [1, 2, 3]
-                },
-                {
-                    "title": "Example",
-                    "description": "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
-                    "sources": [4, 5]
-                }
-            ]
-        }
+    setIsLoading(true)
+
+    const chatResponse = await fetchData({systemContent, userContent})
+    console.log(chatResponse)
+
+    // const chatResponse = { section : [
+    //     {
+    //         "header": "What is the definition of a vector?",
+    //         "subheader": [
+    //             {
+    //                 "title": "Definition",
+    //                 "description": "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
+    //                 "sources": [1, 2, 3]
+    //             },
+    //             {
+    //                 "title": "Example",
+    //                 "description": "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
+    //                 "sources": [4, 5]
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "header": "What is the definition of a vector?",
+    //         "subheader": [
+    //             {
+    //                 "title": "Definition",
+    //                 "description": "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
+    //                 "sources": [1, 2, 3]
+    //             },
+    //             {
+    //                 "title": "Example",
+    //                 "description": "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
+    //                 "sources": [4, 5]
+    //             }
+    //         ]
+    //     }
         
-    ]}
+    // ]}
     const {htmlResponse: responses } = await processChatData(chatResponse)
 
-    console.log('this is nodes',nodes2)
+    setIsLoading(false)
+
     const baseX = nodes2.find((n) => n.id === parentId)?.position?.x || 100;
     const baseY = nodes2.find((n) => n.id === parentId)?.position?.y || 100;
-
-    console.log("baseX, baseY",baseX,baseY)
 
     const mergedStringList = chatResponse.section.map((object, index)=>{
       return mergeObjectToString(object);
@@ -149,7 +154,7 @@ export default function App() {
       return {
         id,
         type: 'editableInputNode',
-        position: { x: baseX + 200, y: baseY + index * 150 },
+        position: { x: baseX + index * 350 , y: baseY + 350 },
         data: {
           text,
           initialValue: '',
@@ -212,15 +217,15 @@ export default function App() {
     },
   ]);
 
-  let nodes2 = [{
+  nodes2.push({
       id: '1',
       type: 'fileUploadNode',
       position: { x: 100, y: 100 },
       data: {
         label: 'Upload File',
         onUploadSuccess: handleUploadSuccess,
-      },
-    }];
+      }
+    });
 
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -260,16 +265,62 @@ export default function App() {
                 onNodeClick={onNodeClick}
                 nodeTypes={nodeTypes}
                 fitView
+                fitViewOptions={{maxZoom: 1.5}}
               />
             </div>
 
             {selectedNodeText && (
-              <div style={{ width: panelWidth, height: '100%', padding: '1rem', overflowY: 'auto' }}>
-                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', height: '100%', overflow: 'hidden', overflowY: 'auto', paddingRight: '0.5rem',  }}
-                  dangerouslySetInnerHTML={{ __html: selectedNodeText }}>
-                </div>
+              <div style={{ width: panelWidth, height: '100%', padding: '1rem', overflowY: 'auto', position: 'relative' }}>
+                {/* Close Button */}
+                <button
+                  onClick={() => setSelectedNodeText(null)}
+                  style={{
+                    position: 'absolute',
+                    top: '1rem',
+                    right: '1rem',
+                    background: 'transparent',
+                    border: 'none',
+                    width: '32px',
+                    height: '32px',
+                    cursor: 'pointer',
+                    fontWeight: 'bold',
+                    fontSize: '20px',
+                    lineHeight: '32px',
+                    textAlign: 'center',
+                  }}
+                  title="Close"
+                >
+                  x
+                </button>
+
+                <div
+                  style={{
+                    background: '#f9fafb',
+                    padding: '1rem',
+                    borderRadius: '8px',
+                    height: '100%',
+                    overflowY: 'auto',
+                    paddingRight: '0.5rem',
+                  }}
+                  dangerouslySetInnerHTML={{ __html: selectedNodeText }}
+                />
               </div>
             )}
+
+            {isLoading && (
+              <div style={{
+                position: 'fixed',
+                top: 0, left: 0, right: 0, bottom: 0,
+                backgroundColor: 'rgba(0,0,0,0.3)',
+                display: 'flex',
+                justifyContent: 'center',
+                alignItems: 'center',
+                zIndex: 9999
+              }}>
+                <div className="spinner" />
+              </div>
+            )}
+
           </>
         );
       })()}
