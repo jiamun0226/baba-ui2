@@ -9,6 +9,7 @@ import {
 } from '@xyflow/react';
 import '@xyflow/react/dist/style.css';
 import FileUploadNode from './FileUploadNode'; // 👈 Import custom node
+import { DocumentViewer } from "react-documents";
 
 const nodeTypes = {
   fileUploadNode: FileUploadNode,
@@ -21,7 +22,7 @@ export default function App() {
       type: 'fileUploadNode',
       position: { x: 100, y: 100 },
       data: {
-        label: 'Upload Image',
+        label: 'Upload File',
         onFileSelect: (file) => console.log('Uploaded file:', file.name),
       },
     },
@@ -34,7 +35,7 @@ export default function App() {
   );
 
   return (
-    <div style={{ width: '100vw', height: '100vh' }}>
+    <div style={{ width: '100vw', height: '100vh', display: 'flex' }}>
       <ReactFlow
         nodes={nodes}
         edges={edges}
@@ -44,6 +45,11 @@ export default function App() {
         nodeTypes={nodeTypes}
         fitView
       />
+      <DocumentViewer queryParams="h1-N1"
+      url="https://www.w3.org/WAI/ER/tests/xhtml/testfiles/resources/pdf/dummy.pdf"
+>
+        
+      </DocumentViewer>
     </div>
   );
 }
