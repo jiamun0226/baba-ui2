@@ -102,12 +102,15 @@ export default function FileUploadNode({ data, isConnectable }) {
         <label
           htmlFor="file-upload"
           style={{
-            padding: '8px 12px',
-            backgroundColor: '#1e40af',
-            color: 'white',
+            padding: '2px 4px',
+            backgroundColor: '#f9fafb',
+            color: '#171717',
             borderRadius: '4px',
             cursor: 'pointer',
             display: 'inline-block',
+            borderColor: '#171717',
+            borderWidth: 'thin',
+            fontSize: 'small'
           }}
         >
           Choose File
@@ -119,12 +122,13 @@ export default function FileUploadNode({ data, isConnectable }) {
         onClick={handleSubmit}
         disabled={uploading}
         style={{
-          padding: '6px 10px',
-          backgroundColor: uploading ? '#ccc' : '#10b981',
+          padding: '2px 10px',
+          backgroundColor: uploading ? '#ccc' : '#173e94',
           color: 'white',
           border: 'none',
           borderRadius: '4px',
           cursor: uploading ? 'not-allowed' : 'pointer',
+          fontSize: 'small'
         }}
       >
         {uploading ? 'Uploading...' : 'Submit to OSS'}

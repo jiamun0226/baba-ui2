@@ -23,6 +23,7 @@ const nodeTypes = {
 
 export default function App() {
   const [uploadedFile, setUploadedFile] = useState(undefined);
+  const [isLoading, setIsLoading] = useState(false);
   const [showQuizPanel, setShowQuizPanel] = useState(false);
   const [pageNumber, setPageNumber] = useState(10);
   const [numPages, setNumPages] = useState();
@@ -49,6 +50,8 @@ export default function App() {
   let documentIdGlobal = null;
   const [selectedNodeText, setSelectedNodeText] = useState(undefined);
   let historicalData = {};
+  let nodes2 = [];
+
   async function fetchData({ systemContent, userContent }) {
     try {
       const response = await fetch(
@@ -136,53 +139,50 @@ export default function App() {
       systemContent = historicalData[parentId];
     }
 
-    // const chatResponse = await fetchData({systemContent, userContent})
-    // console.log(chatResponse)
-    const chatResponse = {
-      section: [
-        {
-          header: "What is the definition of a vector?",
-          subheader: [
-            {
-              title: "Definition",
-              description:
-                "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
-              sources: [1, 2, 3],
-            },
-            {
-              title: "Example",
-              description:
-                "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
-              sources: [4, 5],
-            },
-          ],
-        },
-        {
-          header: "What is the definition of a vector?",
-          subheader: [
-            {
-              title: "Definition",
-              description:
-                "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
-              sources: [1, 2, 3],
-            },
-            {
-              title: "Example",
-              description:
-                "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
-              sources: [4, 5],
-            },
-          ],
-        },
-      ],
-    };
+    setIsLoading(true);
+
+    const chatResponse = await fetchData({ systemContent, userContent });
+    console.log(chatResponse);
+
+    // const chatResponse = { section : [
+    //     {
+    //         "header": "What is the definition of a vector?",
+    //         "subheader": [
+    //             {
+    //                 "title": "Definition",
+    //                 "description": "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
+    //                 "sources": [1, 2, 3]
+    //             },
+    //             {
+    //                 "title": "Example",
+    //                 "description": "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
+    //                 "sources": [4, 5]
+    //             }
+    //         ]
+    //     },
+    //     {
+    //         "header": "What is the definition of a vector?",
+    //         "subheader": [
+    //             {
+    //                 "title": "Definition",
+    //                 "description": "A vector is a mathematical object that has both magnitude and direction. It is represented by an arrow with a length and a direction.",
+    //                 "sources": [1, 2, 3]
+    //             },
+    //             {
+    //                 "title": "Example",
+    //                 "description": "A vector can be represented as an arrow with length 3 and direction pointing to the right.",
+    //                 "sources": [4, 5]
+    //             }
+    //         ]
+    //     }
+
+    // ]}
     const { htmlResponse: responses } = await processChatData(chatResponse);
 
-    console.log("this is nodes", nodes2);
+    setIsLoading(false);
+
     const baseX = nodes2.find((n) => n.id === parentId)?.position?.x || 100;
     const baseY = nodes2.find((n) => n.id === parentId)?.position?.y || 100;
-
-    console.log("baseX, baseY", baseX, baseY);
 
     const mergedStringList = chatResponse.section.map((object, index) => {
       return mergeObjectToString(object);
@@ -194,7 +194,7 @@ export default function App() {
       return {
         id,
         type: "editableInputNode",
-        position: { x: baseX + 200, y: baseY + index * 150 },
+        position: { x: baseX + index * 350, y: baseY + 350 },
         data: {
           text,
           initialValue: "",
@@ -260,17 +260,15 @@ export default function App() {
     },
   ]);
 
-  let nodes2 = [
-    {
-      id: "1",
-      type: "fileUploadNode",
-      position: { x: 100, y: 100 },
-      data: {
-        label: "Upload File",
-        onUploadSuccess: handleUploadSuccess,
-      },
+  nodes2.push({
+    id: "1",
+    type: "fileUploadNode",
+    position: { x: 100, y: 100 },
+    data: {
+      label: "Upload File",
+      onUploadSuccess: handleUploadSuccess,
     },
-  ];
+  });
 
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
@@ -458,6 +456,7 @@ export default function App() {
                 onNodeClick={onNodeClick}
                 nodeTypes={nodeTypes}
                 fitView
+                fitViewOptions={{ maxZoom: 1.5 }}
               />
             </div>
 
@@ -468,134 +467,44 @@ export default function App() {
                   height: "100%",
                   padding: "1rem",
                   overflowY: "auto",
+                  position: "relative",
                 }}>
+                {/* Close Button */}
+                <button
+                  onClick={() => setSelectedNodeText(null)}
+                  style={{
+                    position: "absolute",
+                    top: "1rem",
+                    right: "1rem",
+                    background: "transparent",
+                    border: "none",
+                    width: "32px",
+                    height: "32px",
+                    cursor: "pointer",
+                    fontWeight: "bold",
+                    fontSize: "20px",
+                    lineHeight: "32px",
+                    textAlign: "center",
+                  }}
+                  title="Close">
+                  x
+                </button>
+
                 <div
                   style={{
                     background: "#f9fafb",
                     padding: "1rem",
                     borderRadius: "8px",
                     height: "100%",
-                    overflow: "hidden",
                     overflowY: "auto",
                     paddingRight: "0.5rem",
                   }}
-                  dangerouslySetInnerHTML={{ __html: selectedNodeText }}></div>
+                  dangerouslySetInnerHTML={{ __html: selectedNodeText }}
+                />
               </div>
             )}
 
-            {/* Floating Buttons */}
-            <div
-              style={{
-                position: "fixed",
-                left: "20px",
-                top: "20px",
-                display: "flex",
-                gap: "12px",
-                zIndex: 1000,
-              }}>
-              <button
-                onClick={() => {
-                  setShowQuizPanel(true);
-                  fetchQuizzes();
-                }}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "#F5F5F7",
-                  color: "#1C1C1E",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "all 0.2s",
-                  fontWeight: "500",
-                  ":hover": {
-                    background: "#E5E5EA",
-                  },
-                }}>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M12 22C17.5228 22 22 17.5228 22 12C22 6.47715 17.5228 2 12 2C6.47715 2 2 6.47715 2 12C2 17.5228 6.47715 22 12 22Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M9.09 9C9.3251 8.33167 9.78915 7.76811 10.4 7.40913C11.0108 7.05016 11.7289 6.91894 12.4272 7.03871C13.1255 7.15849 13.7588 7.52152 14.2151 8.06353C14.6713 8.60553 14.9211 9.29152 14.92 10C14.92 12 11.92 13 11.92 13"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M12 17H12.01"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Quizzes
-              </button>
-              <button
-                onClick={() => {
-                  setShowFlashcardPanel(true);
-                  fetchFlashcards();
-                }}
-                style={{
-                  padding: "8px 16px",
-                  borderRadius: "8px",
-                  border: "none",
-                  background: "#F5F5F7",
-                  color: "#1C1C1E",
-                  fontSize: "14px",
-                  cursor: "pointer",
-                  boxShadow: "0 2px 10px rgba(0,0,0,0.05)",
-                  display: "flex",
-                  alignItems: "center",
-                  gap: "8px",
-                  transition: "all 0.2s",
-                  fontWeight: "500",
-                  ":hover": {
-                    background: "#E5E5EA",
-                  },
-                }}>
-                <svg
-                  width="16"
-                  height="16"
-                  viewBox="0 0 24 24"
-                  fill="none"
-                  xmlns="http://www.w3.org/2000/svg">
-                  <path
-                    d="M21 4H3C1.89543 4 1 4.89543 1 6V18C1 19.1046 1.89543 20 3 20H21C22.1046 20 23 19.1046 23 18V6C23 4.89543 22.1046 4 21 4Z"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                  <path
-                    d="M1 10H23"
-                    stroke="currentColor"
-                    strokeWidth="2"
-                    strokeLinecap="round"
-                    strokeLinejoin="round"
-                  />
-                </svg>
-                Flashcards
-              </button>
-            </div>
-
-            {/* Quiz Panel */}
-            {showQuizPanel && (
+            {isLoading && (
               <div
                 style={{
                   position: "fixed",
@@ -603,137 +512,13 @@ export default function App() {
                   left: 0,
                   right: 0,
                   bottom: 0,
-                  background: "rgba(0,0,0,0.5)",
-                  zIndex: 1001,
+                  backgroundColor: "rgba(0,0,0,0.3)",
                   display: "flex",
-                  justifyContent: "flex-end",
-                }}
-                onClick={() => setShowQuizPanel(false)}>
-                <div
-                  style={{
-                    width: "400px",
-                    height: "100%",
-                    background: "white",
-                    padding: "20px",
-                    boxShadow: "-2px 0 10px rgba(0,0,0,0.1)",
-                    overflow: "auto",
-                  }}
-                  onClick={(e) => e.stopPropagation()}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "20px",
-                    }}>
-                    <h2 style={{ margin: 0 }}>Quizzes</h2>
-                    <button
-                      onClick={() => setShowQuizPanel(false)}
-                      style={{
-                        border: "none",
-                        background: "none",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                        color: "#666",
-                      }}>
-                      ×
-                    </button>
-                  </div>
-                  {isQuizLoading ? (
-                    <div style={{ textAlign: "center", padding: "20px" }}>
-                      Loading quizzes...
-                    </div>
-                  ) : (
-                    <div>
-                      {quizData?.quizzes.map((quiz) => (
-                        <div
-                          key={quiz.id}
-                          style={{
-                            padding: "15px",
-                            borderRadius: "10px",
-                            background: "#f5f5f7",
-                            marginBottom: "10px",
-                            cursor: "pointer",
-                          }}>
-                          {quiz.title}
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
-              </div>
-            )}
-
-            {/* Flashcard Panel */}
-            {showFlashcardPanel && (
-              <div
-                style={{
-                  position: "fixed",
-                  top: 0,
-                  left: 0,
-                  right: 0,
-                  bottom: 0,
-                  background: "rgba(0,0,0,0.5)",
-                  zIndex: 1001,
-                  display: "flex",
-                  justifyContent: "flex-end",
-                }}
-                onClick={() => setShowFlashcardPanel(false)}>
-                <div
-                  style={{
-                    width: "400px",
-                    height: "100%",
-                    background: "white",
-                    padding: "20px",
-                    boxShadow: "-2px 0 10px rgba(0,0,0,0.1)",
-                    overflow: "auto",
-                  }}
-                  onClick={(e) => e.stopPropagation()}>
-                  <div
-                    style={{
-                      display: "flex",
-                      justifyContent: "space-between",
-                      alignItems: "center",
-                      marginBottom: "20px",
-                    }}>
-                    <h2 style={{ margin: 0 }}>Flashcards</h2>
-                    <button
-                      onClick={() => setShowFlashcardPanel(false)}
-                      style={{
-                        border: "none",
-                        background: "none",
-                        fontSize: "24px",
-                        cursor: "pointer",
-                        color: "#666",
-                      }}>
-                      ×
-                    </button>
-                  </div>
-                  {isFlashcardLoading ? (
-                    <div style={{ textAlign: "center", padding: "20px" }}>
-                      Loading flashcards...
-                    </div>
-                  ) : (
-                    <div>
-                      {flashcardData?.flashcards.map((card) => (
-                        <div
-                          key={card.id}
-                          style={{
-                            padding: "15px",
-                            borderRadius: "10px",
-                            background: "#f5f5f7",
-                            marginBottom: "10px",
-                            cursor: "pointer",
-                          }}>
-                          <div style={{ fontWeight: "bold" }}>{card.front}</div>
-                          <div style={{ marginTop: "10px", color: "#666" }}>
-                            {card.back}
-                          </div>
-                        </div>
-                      ))}
-                    </div>
-                  )}
-                </div>
+                  justifyContent: "center",
+                  alignItems: "center",
+                  zIndex: 9999,
+                }}>
+                <div className="spinner" />
               </div>
             )}
           </>
