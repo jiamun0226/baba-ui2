@@ -18,12 +18,11 @@ const nodeTypes = {
 };
 
 export default function App() {
-  const [uploadedFile, setUploadedFile] = useState(undefined); // ✅ Use state
-  const [documentId, setDocumentId] = useState(undefined); // ✅ Use state
+  const [uploadedFile, setUploadedFile] = useState(undefined); 
+  let documentIdGlobal = null
   const [selectedNodeText, setSelectedNodeText] = useState(undefined);
-  const [historicalData, setHistoricalData] = useState([]);
-
-  async function fetchData( { systemContent, userContent } ) {
+  let historicalData = {};
+  async function fetchData( { systemContent, userContent} ) {
     try {
       const response = await fetch(`${process.env.NEXT_PUBLIC_INFERENCE_IP}/chat`, {
         method: 'POST',
@@ -41,7 +40,7 @@ export default function App() {
               "content": userContent
             }
           ],
-          "document_id": documentId
+          "document_id": documentIdGlobal
         })
       });
 
@@ -72,18 +71,32 @@ export default function App() {
       return `<div class="chat-response"><h1>${section.header}</h1>${subheadersHtml}</div>`;
     });
 
-    return {htmlResponse, historicalResponse: htmlResponse}
+    return {htmlResponse}
+  }
+
+  function mergeObjectToString(obj) {
+    if (!obj) return '';
+
+    let result = `Header is ${obj.header}.`;
+
+    if (Array.isArray(obj.subheader)) {
+      obj.subheader.forEach((item, index) => {
+        const num = index + 1;
+        result += ` SubHeader ${num} is ${item.title}. Description ${num} is ${item.description}.`;
+      });
+    }
+    return result;
   }
 
   const handleQuestionSubmit = async (parentId, userContent) => {
-    console.log('Question submitted:', userContent);
-
-    let systemContent = historicalData[parentId]
+    let systemContent;
     if (parentId == '2') {
       systemContent = ''
+    }else{
+      systemContent = historicalData[parentId]
     }
 
-    // const chatResponse = await fetchData(systemContent, userContent)
+    // const chatResponse = await fetchData({systemContent, userContent})
     // console.log(chatResponse)
     const chatResponse = { section : [
         {
@@ -118,19 +131,21 @@ export default function App() {
         }
         
     ]}
-    const {htmlResponse, historicalResponse} = await processChatData(chatResponse)
-    const responses = htmlResponse
-    // const responses = [
-    //   `Answer 1 to "${userContent}"`,
-    //   `Answer 2 to "${userContent}"`,
-    //   `Answer 3 to "${userContent}"`,
-    // ];
+    const {htmlResponse: responses } = await processChatData(chatResponse)
 
-    const baseX = nodes.find((n) => n.id === parentId)?.position?.x || 100;
-    const baseY = nodes.find((n) => n.id === parentId)?.position?.y || 100;
+    console.log('this is nodes',nodes2)
+    const baseX = nodes2.find((n) => n.id === parentId)?.position?.x || 100;
+    const baseY = nodes2.find((n) => n.id === parentId)?.position?.y || 100;
+
+    console.log("baseX, baseY",baseX,baseY)
+
+    const mergedStringList = chatResponse.section.map((object, index)=>{
+      return mergeObjectToString(object);
+    })
 
     const newNodes = responses.map((text, index) => {
-      const id = `${parentId}-child-${index}`;
+      const id = `${parentId}-${index}`;
+      historicalData[id] = mergedStringList[index]
       return {
         id,
         type: 'editableInputNode',
@@ -138,11 +153,13 @@ export default function App() {
         data: {
           text,
           initialValue: '',
-          placeholder: 'Type follow-up...',
+          placeholder: 'More questions...',
           onEnter: (val) => handleQuestionSubmit(id, val),
         },
       };
     });
+
+    nodes2 = [...nodes2, ...newNodes]
 
   const newEdges = newNodes.map((n) => ({
       id: `e-${parentId}-${n.id}`,
@@ -162,8 +179,7 @@ export default function App() {
 
   const handleUploadSuccess = async ({ossUrl, documentId}) => {
     setUploadedFile(ossUrl); 
-    setDocumentId(documentId);
-    console.log('this is doc id',documentId)
+    documentIdGlobal = documentId
 
     const newId = '2';
     setNodes((nds) => [
@@ -173,9 +189,9 @@ export default function App() {
         type: 'editableInputNode',
         position: { x: 100, y: 300 },
         data: {
-          text: '<p>Ask me some questions regarding the uploaded documents!</p>',
+          text: '<h3>Ask me some questions regarding the uploaded documents!</h3>',
           initialValue: '',
-          placeholder: 'Type here...',
+          placeholder: 'Type your question here...',
           onEnter: (val) => handleQuestionSubmit(newId, val)
         },
       },
@@ -195,6 +211,17 @@ export default function App() {
       },
     },
   ]);
+
+  let nodes2 = [{
+      id: '1',
+      type: 'fileUploadNode',
+      position: { x: 100, y: 100 },
+      data: {
+        label: 'Upload File',
+        onUploadSuccess: handleUploadSuccess,
+      },
+    }];
+
   const [edges, setEdges, onEdgesChange] = useEdgesState([]);
 
   const onConnect = useCallback(
@@ -238,7 +265,7 @@ export default function App() {
 
             {selectedNodeText && (
               <div style={{ width: panelWidth, height: '100%', padding: '1rem', overflowY: 'auto' }}>
-                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px' }}
+                <div style={{ background: '#f9fafb', padding: '1rem', borderRadius: '8px', height: '100%', overflow: 'hidden', overflowY: 'auto', paddingRight: '0.5rem',  }}
                   dangerouslySetInnerHTML={{ __html: selectedNodeText }}>
                 </div>
               </div>

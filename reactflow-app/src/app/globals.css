@@ -36,6 +36,11 @@ h2 {
   font-weight: bold;
 }
 
+h3 { 
+  font-size: medium;
+  font-weight: bold;
+}
+
 .chat-response{
   display: flex;
   flex-direction: column;
