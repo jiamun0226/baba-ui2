@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { Handle, Position } from '@xyflow/react';
-import { storeFile } from '../../../lib/oss/init';
+import { storeFile, retrieveFileURL } from '../../../lib/oss/init';
 import { v4 as uuidv4 } from 'uuid';
 
 export default function FileUploadNode({ data, isConnectable }) {
@@ -14,7 +14,6 @@ export default function FileUploadNode({ data, isConnectable }) {
     const selected = e.target.files?.[0];
     if (!selected) return;
     setFile(selected);
-    setPreview(URL.createObjectURL(selected));
   };
 
   const onDocumentLoadSuccess = ({ numPages }) => {
@@ -33,7 +32,8 @@ export default function FileUploadNode({ data, isConnectable }) {
       const { status, result } = await storeFile(filePath, fileName, fileStream);
       if (status === 'success') {
         alert('Uploaded successfully!');
-        // Here you could set a flag if you want
+        const { ossUrl }= await retrieveFileURL(filePath)
+        data.onUploadSuccess(ossUrl);
       } else {
         alert('Upload failed!');
       }

@@ -48,6 +48,7 @@ export const storeFile = async (filePath, fileName, fileStream) => {
 	}
 };
 
+
 export const retrieveFile = async (filePath) => {
 	try {
 		// Retrieve metadata associated with the file using the head method
@@ -73,15 +74,10 @@ export const retrieveFile = async (filePath) => {
 	}
 };
 
-export const retrieveFileURL = async (filePath, userID, newFileName) => {
+export const retrieveFileURL = async (filePath, newFileName=undefined) => {
 	try {
 		// Retrieve metadata associated with the file using the head method
 		const metadata = await client.head(filePath);
-
-		if (!userID) {
-			console.error('User not authorized to retrieve this file');
-			return { status: 'failed', result: 'User not authorized to retrieve this file' };
-		}
 
 		let response;
 		if (newFileName) {
@@ -92,9 +88,9 @@ export const retrieveFileURL = async (filePath, userID, newFileName) => {
 
 		let url = client.signatureUrl(filePath, { expires: 3600, response: response }); // URL expires in 1 hour (adjust as needed)
 
-		let secureUrl = url.replace('http://', 'https://');
+		let ossUrl = url.replace('http://', 'https://');
 
-		return { status: 'success', result: secureUrl };
+		return { status: 'success', ossUrl };
 	} catch (err) {
 		console.error(
 			'Error retrieving file from OSS:',
