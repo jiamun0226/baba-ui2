@@ -29,8 +29,8 @@ export default function EditableInputNode({ data, isConnectable }) {
     >
       <Handle type="target" position={Position.Top} isConnectable={isConnectable} />
 
-      <div style={{ flexGrow: 1, userSelect: 'none' }}>
-        {data.text || 'Enter value:'}
+      <div style={{ flexGrow: 1, userSelect: 'none', maxHeight: 200 }}
+        dangerouslySetInnerHTML={{ __html: data.text || '' }}>
       </div>
 
       <input

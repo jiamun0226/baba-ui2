@@ -5,6 +5,30 @@ import { Handle, Position } from '@xyflow/react';
 import { storeFile, retrieveFileURL } from '../../../lib/oss/init';
 import { v4 as uuidv4 } from 'uuid';
 
+async function fetchData(fileName) {
+  try {
+    const response = await fetch(`${process.env.NEXT_PUBLIC_INFERENCE_IP}/process-pdf`, {
+      method: 'POST',
+      headers: {
+        'Content-Type': 'application/json'
+      },
+      body: JSON.stringify({
+        filename: fileName
+      })
+    });
+
+    if (!response.ok) {
+      throw new Error(`HTTP error! status: ${response.status}`);
+    }
+
+    const data = await response.json();
+    console.log('API data:', data);
+    return data;
+  } catch (error) {
+    console.error('Error fetching data:', error);
+  }
+}
+
 export default function FileUploadNode({ data, isConnectable }) {
   const [file, setFile] = useState(null);
   const [numPages, setNumPages] = useState(null);
@@ -31,9 +55,13 @@ export default function FileUploadNode({ data, isConnectable }) {
 
       const { status, result } = await storeFile(filePath, fileName, fileStream);
       if (status === 'success') {
-        alert('Uploaded successfully!');
         const { ossUrl }= await retrieveFileURL(filePath)
-        data.onUploadSuccess(ossUrl);
+        const processPdfData = await fetchData(result.name)
+        if (!processPdfData.success) {
+          alert('Process pdf failed!');
+        }
+        data.onUploadSuccess({ossUrl, documentId:processPdfData.document_id});
+        alert('Uploaded successfully!');
       } else {
         alert('Upload failed!');
       }
